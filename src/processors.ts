@@ -1,6 +1,6 @@
 import { Language } from "./interfaces";
 import { ERROR_MESSAGES, LINE_TEMPLATE, SNIPPETS } from "./resources";
-import { findContents, findLang, removeValuesJs, removeValuesTs, splitAndCleanContentsJs, splitAndCleanContentsTs } from "./utils";
+import { findContents, findEnumFieldNameDescriptionJs, findEnumFieldNameDescriptionTs, findLang, removeValuesJs, removeValuesTs, splitAndCleanContentsJs, splitAndCleanContentsTs } from "./utils";
 
 export const generateSnippet = (str: string) => {
   const lang = findLang(str);
@@ -19,8 +19,8 @@ const generateSnippetFromTs = (str: string): string => {
   const cleanedContents = splitAndCleanContentsTs(contents);
   const cleanedValue = removeValuesTs(cleanedContents);
   const lineGenerator = LINE_GENERATORS[lang](enumName);
-  const lines = cleanedValue.map(lineGenerator);
-  return SNIPPETS[lang](enumName, lines);
+  const lines = cleanedValue.map((name) => lineGenerator(name, ENUM_DESCRIPTION_FINDERS[lang](str, name)));
+  return SNIPPETS[lang](enumName, lines, cleanedValue);
 };
 
 const generateSnippetFromJs = (str: string) => {
@@ -34,8 +34,8 @@ const generateSnippetFromJs = (str: string) => {
   const cleanedContents = splitAndCleanContentsJs(contents);
   const cleanedValue = removeValuesJs(cleanedContents);
   const lineGenerator = LINE_GENERATORS[lang](enumName);
-  const lines = cleanedValue.map(lineGenerator);
-  return SNIPPETS[lang](enumName, lines);
+  const lines = cleanedValue.map((name) => lineGenerator(name, ENUM_DESCRIPTION_FINDERS[lang](str, name)));
+  return SNIPPETS[lang](enumName, lines, cleanedValue);
 };
 
 const SNIPPET_GENERATORS = {
@@ -43,7 +43,7 @@ const SNIPPET_GENERATORS = {
   [Language.typeScript]: generateSnippetFromTs,
 };
 
-const generateLine = (enumName: string) => (str: string) => LINE_TEMPLATE(enumName, str);
+const generateLine = (enumName: string) => (str: string, value?: string) => LINE_TEMPLATE(enumName, str, value);
 
 const generateLineFromTs = generateLine;
 const generateLineFromJs = generateLine;
@@ -54,12 +54,7 @@ const LINE_GENERATORS = {
 };
 
 const findEnumNameBase = (str: string) => {
-  const [e, name, name2, ...values] = str
-    .replace(/\s\s+/g, " ")
-    .split(" ")
-    .map((i) => i.replace(/[^0-9^a-zA-Z]/g, ""))
-    .filter((i) => !!i);
-  return name.includes("enum") ? name2 : name;
+  return str.match(/enum ([^ \{]*)/)?.[1] ?? 'unknown';
 };
 
 const findEnumNameFromJs = findEnumNameBase;
@@ -68,4 +63,10 @@ const findEnumNameFromTs = findEnumNameBase;
 const ENUM_NAME_FINDERS = {
   [Language.javaScript]: findEnumNameFromJs,
   [Language.typeScript]: findEnumNameFromTs,
+};
+
+
+const ENUM_DESCRIPTION_FINDERS = {
+  [Language.javaScript]: findEnumFieldNameDescriptionJs,
+  [Language.typeScript]: findEnumFieldNameDescriptionTs,
 };

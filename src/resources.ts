@@ -1,18 +1,27 @@
 import { Language } from "./interfaces";
-import { camelToWord, pascalToUpper } from "./utils";
+import { camelToWord, toCammelCale } from "./utils";
 
-const SNIPPETS_JS = (enumName: string, lines: string[]) =>
-  `const ${pascalToUpper(enumName)}_MAPPING = {
+const SNIPPETS_JS = (enumName: string, lines: string[], enumFields: string[]) =>
+  `export const ${toCammelCale(enumName + '_Constant')} = {
     ${lines.join(",\n	")},
-};`;
+} as const;
 
-const SNIPPETS_TS = (enumName: string, lines: string[]) =>
-  `export const ${pascalToUpper(enumName)}_MAPPING: Record<${enumName}, string> = {
-    ${lines.join(",\n	")},
-};
+export const ${toCammelCale(enumName + '_Values')} = [
+    ${enumFields.map(enumFieldName => `${enumName}.${enumFieldName}`).join(',\n    ')},
+] as const;
 `;
 
-export const LINE_TEMPLATE = (enumName: string, enumFieldName: string) => `[${enumName}.${enumFieldName}]: '${camelToWord(enumFieldName)}'`;
+const SNIPPETS_TS = (enumName: string, lines: string[], enumFields: string[]) =>
+  `export const ${toCammelCale(enumName + '_Constant')} = {
+    ${lines.join(",\n	")},
+} as const;
+
+export const ${toCammelCale(enumName + '_Values')} = [
+    ${enumFields.map(enumFieldName => `${enumName}.${enumFieldName}`).join(',\n    ')},
+] as const;
+`;
+
+export const LINE_TEMPLATE = (enumName: string, enumFieldName: string, value=camelToWord(enumFieldName)) => `[${enumName}.${enumFieldName}]: '${value}'`;
 
 export const SNIPPETS = {
   [Language.javaScript]: SNIPPETS_JS,

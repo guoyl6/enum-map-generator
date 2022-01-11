@@ -15,15 +15,37 @@ export const pascalToUpper = (str: string) =>
     .replace("_", "")
     .toUpperCase()
     ?.trim();
+export const toCammelCale = (str: string) =>
+    str
+        .trim()
+        .toLowerCase()
+        .replace(/[-_]([a-z])/g, (v, i) => i.toUpperCase())
+        .replace(/^[a-z]/g, v => v.toUpperCase())
+        .replace('Enum', '');
+
 export const splitAndCleanContentsTs = (str: string) =>
   str
     .split(",")
     ?.filter((i) => !!i)
-    ?.map((i) => i.replace(/[^0-9^a-zA-Z\=]/g, ""))
+    ?.map((i) => getEnumFieldName(i, '=') ?? '')
     ?.filter((i) => !!i);
 export const splitAndCleanContentsJs = (str: string) =>
   str
     .split(",")
     ?.filter((i) => !!i)
-    ?.map((i) => i.replace(/[^0-9^a-zA-Z\:]/g, ""))
+    ?.map((i) => getEnumFieldName(i, ':') ?? '')
     ?.filter((i) => !!i);
+export const findEnumFieldNameDescriptionTs = (str: string, enumFieldName: string) => {
+    const enumFieldLine = str.split(',').filter(i => !!i).find(i => getEnumFieldName(i, '=') === enumFieldName);
+    return enumFieldLine?.match(/\/\*\*?(.*)\*\//)?.[1].trim() ?? enumFieldName;
+}
+export const findEnumFieldNameDescriptionJs = (str: string, enumFieldName: string) => {
+    const enumFieldLine = str.split(',').filter(i => !!i).find(i => getEnumFieldName(i, ':') === enumFieldName);
+    return enumFieldLine?.match(/\/\*\*?(.*)\*\//)?.[1].trim() ?? enumFieldName;
+}
+
+function getEnumFieldName(i: string, splitor?: ':' | '=') {
+    return i.split('\n')
+        .find(i => splitor ? i.indexOf(splitor) !== -1 : /[:=]/.test(i))
+        ?.split(splitor ?? /[:=]/)[0]?.trim();
+}
