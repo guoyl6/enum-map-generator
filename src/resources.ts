@@ -19,6 +19,11 @@ const SNIPPETS_TS = (enumName: string, lines: string[], enumFields: string[]) =>
 export const ${toCammelCale(enumName + '_Values')} = [
     ${enumFields.map(enumFieldName => `${enumName}.${enumFieldName}`).join(',\n    ')},
 ] as const;
+
+export const ${toCammelCale(enumName + '_Options_Data')} = ${toCammelCale(enumName + '_Values')}.map(value => ({
+    id: value,
+    name: ${toCammelCale(enumName + '_Constant')}[value]
+}));
 `;
 
 export const LINE_TEMPLATE = (enumName: string, enumFieldName: string, value=camelToWord(enumFieldName)) => `[${enumName}.${enumFieldName}]: '${value}'`;
